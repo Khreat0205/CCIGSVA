@@ -1,0 +1,18 @@
+Package: CCIGSVA
+Title: Pathway Enrichment of Cell-Cell Communication Profiles
+Version: 0.1.0
+Authors@R: person("Kyeonghun", "Jeong", email = "scientist0205@snu.ac.kr", role = c("aut", "cre"))
+Description: Builds ligand-receptor interaction by sample matrices for each
+    source-target cell-type pair and calculates pathway enrichment with gene set
+    variation analysis. Provides explicit sample handling, cell-type coverage
+    filtering and structured results. Implements the approach described by
+    Jeong et al. (2023) <doi:10.1038/s41598-023-46350-2>.
+License: GPL-3
+Encoding: UTF-8
+Depends: R (>= 4.3.0)
+Imports: GSVA (>= 1.50.0), SummarizedExperiment, S4Vectors, BiocParallel
+Suggests: testthat (>= 3.0.0)
+Config/testthat/edition: 3
+URL: https://github.com/Khreat0205/CCIGSVA
+BugReports: https://github.com/Khreat0205/CCIGSVA/issues
+RoxygenNote: 7.3.1
