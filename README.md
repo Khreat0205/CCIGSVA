@@ -1,17 +1,15 @@
 # CCIGSVA
 
-CCIGSVA calculates sample-level pathway enrichment from ligand-receptor (LR)
-communication scores, separately for each source-target cell-type pair.
+CCIGSVA calculates sample-level pathway enrichment of cell-cell interactions
+inferred from single-cell transcriptome data by applying GSVA to ligand-receptor
+interaction scores for each source-target cell-type pair.
 
-**Development version 0.1.0.** Based on the CCI-GSVA approach in
-[Jeong et al. (2023)](https://doi.org/10.1038/s41598-023-46350-2) and an
-author-supplied analysis script. Exact reproduction of the published results
-has **not** been established: the original GMT, reference inputs/results and
-historical software versions are still needed. See [implementation decisions](METHODS.md).
+The CCI-GSVA method was introduced in
+[Jeong et al. (2023)](https://doi.org/10.1038/s41598-023-46350-2).
 
 ## Installation
 
-Requires R >= 4.3 and GSVA >= 1.50 (parameter-object API).
+Requires R >= 4.3 and GSVA >= 1.50.
 
 ```r
 install.packages(c("BiocManager", "remotes"))
@@ -30,9 +28,12 @@ SummarizedExperiment::rowData(result)
 ```
 
 The assay has source-target-pathway features in rows and samples in columns.
-The example is synthetic and contains no patient data.
+The example uses synthetic interaction scores.
 
-## Use existing CellChat exports and GMT
+## Use CellChat results
+
+Start with one CSV per sample exported using `CellChat::subsetCommunication()`
+and a GMT file mapping ligand-receptor interactions to signaling pathways.
 
 ```r
 samples <- c("sample1", "sample2", "sample3") # complete cohort, including empty exports
@@ -40,7 +41,7 @@ tables <- setNames(lapply(samples, function(s) {
   read.csv(file.path("Res_CellChat", paste0("cellchat_", s, ".csv")))
 }), samples)
 cci <- from_cellchat(tables)
-lr_sets <- read_lr_gmt("typeB_interactionSet.gmt")
+lr_sets <- read_lr_gmt("lr_pathways.gmt")
 
 # Cell counts must come from the cell metadata, not significant CCI rows.
 cell_counts <- table(obj$Anno1, obj$Individual)
@@ -50,12 +51,13 @@ result <- cci_gsva(cci, lr_sets, samples = samples,
                    cell_types = coverage$cell_type[coverage$keep], min_size = 2)
 ```
 
-Set `min_coverage = 0.7` for 70%, or `1` for presence in every sample.
-The historical script used `rowSums(cell_counts >= 10) == 16`; this is only
-equivalent to 100% coverage if the cohort contains exactly 16 samples.
-The script passed `min.sz = 1`; use `min_size = 1` for that setting.
-The new package defaults to 2 at the author's request. GMT construction may
-have imposed a separate minimum, which is not yet known.
+Here, `obj` is a Seurat object with cell-type labels in `Anno1` and sample IDs
+in `Individual`. Replace these names with the corresponding metadata columns.
+
+- `min_cells = 10`: minimum cells for a cell type to be present in a sample.
+- `min_coverage = 0.8`: retain cell types present in at least 80% of samples.
+  Use `0.7` for 70% or `1` for all samples.
+- `min_size = 2`: minimum matched, nonconstant LR interactions per pathway.
 
 Alternatively, construct sets directly from a CellChat database table:
 
@@ -63,9 +65,8 @@ Alternatively, construct sets directly from a CellChat database table:
 lr_sets <- prepare_lr_sets(CellChatDB.human$interaction)
 ```
 
-This alternative is not assumed equivalent to the historical GMT.
-CellChat is not required to install CCIGSVA. Run CCI inference upstream;
-`from_cellchat()` accepts exported tables, not CellChat S4 objects.
+CellChat is not required to install CCIGSVA. `from_cellchat()` accepts exported
+communication tables.
 Other tools can supply a long table through `prepare_cci()`, provided scores
 and LR identifiers have a compatible interpretation.
 
@@ -78,7 +79,6 @@ and LR identifiers have a compatible interpretation.
 - Remove constant LR rows and apply pathway minimum size after matching.
 - Use Gaussian GSVA with `tau = 1`, `maxDiff = TRUE`, `absRanking = FALSE`.
 - Exclude sets covering the full variable LR universe (no background), with an audit report.
-- Keep source, target and pathway labels separate; never parse them using dots.
 
 Zero filling is an input convention. A missing cell type, an untested edge and
 a nonsignificant edge are not necessarily biologically equivalent. Choose the
@@ -91,15 +91,10 @@ S4Vectors::metadata(result)$effective_lr_sets
 S4Vectors::metadata(result)$versions
 ```
 
-COVID-19 severity feature selection, clustering, IGP and subtype labeling are
-application analyses and are outside this package. No historical regression
-test is claimed until genuine reference inputs and outputs are available.
-
 ## Reference and license
 
 Jeong K, Kim Y, Jeon J, Kim K. Subtyping of COVID-19 samples based on
 cell-cell interaction in single cell transcriptomes. *Scientific Reports*
 13, 19629 (2023). DOI: [10.1038/s41598-023-46350-2](https://doi.org/10.1038/s41598-023-46350-2).
 
-GPL-3. This repository contains newly organized package code and synthetic
-examples; it does not redistribute CellChatDB, the historical GMT or cohort data.
+GPL-3.
