@@ -1,0 +1,6 @@
+bibentry(bibtype = "Article",
+  title = "Subtyping of COVID-19 samples based on cell-cell interaction in single cell transcriptomes",
+  author = c(person("Kyeonghun", "Jeong"), person("Yooeun", "Kim"),
+             person("Jaemin", "Jeon"), person("Kwangsoo", "Kim")),
+  journal = "Scientific Reports", year = "2023", volume = "13", pages = "19629",
+  doi = "10.1038/s41598-023-46350-2")
